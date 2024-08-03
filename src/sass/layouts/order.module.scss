@@ -1,0 +1,72 @@
+@import "../utils/container";
+@import "../utils/mixins";
+
+.container__order {
+  @include flex();
+  justify-content: space-between;
+  padding-top: 94px;
+  padding-bottom: 108px;
+}
+.container__form {
+  width: 100%;
+  max-width: 648px;
+}
+.title {
+  text-align: center;
+  padding-bottom: 32px;
+  @include font(20px, 2vw, 32px, 300, 45px);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+.form__box {
+  position: relative;
+}
+.input {
+  width: 100%;
+  background-color: #eef4f6;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  color: #141517;
+  @include font(14px, 2vw, 20px, 300, 32px);
+  padding: 12px 14px;
+}
+
+.error {
+  position: absolute;
+  bottom: -15px;
+  left: 0;
+  color: red;
+  @include font(10px, 2vw, 12px, 400, 12px);
+}
+
+.box__chip {
+  margin: 0 auto;
+  padding: 12px 0;
+}
+.box__btn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #141517;
+  @include font(14px, 2vw, 20px, 300, 32px);
+}
+.styled__link {
+  text-align: center;
+  padding: 12px 0;
+  background-color: #ffaf00;
+  border-radius: 8px;
+}
+.styled__btn {
+  padding: 12px 0;
+  background-color: #ff6a00;
+  @include font(14px, 2vw, 20px, 300, 32px);
+  border: none;
+
+  outline: none;
+  border-radius: 8px;
+}
