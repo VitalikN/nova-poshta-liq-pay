@@ -1,6 +1,6 @@
-export interface City {
+export interface Warehouse {
   Description: string;
-  AreaDescription: string;
+  Number: string;
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -10,9 +10,7 @@ if (!baseUrl || !apiKey) {
   throw new Error("API base URL or API key is not defined");
 }
 
-export async function fetchCities(findByString: string): Promise<City[]> {
-  console.log(findByString);
-
+export async function fetchWarehouses(cityName: string): Promise<Warehouse[]> {
   try {
     const response = await fetch(baseUrl as string, {
       method: "POST",
@@ -21,10 +19,13 @@ export async function fetchCities(findByString: string): Promise<City[]> {
       },
       body: JSON.stringify({
         apiKey,
-        modelName: "AddressGeneral",
-        calledMethod: "getCities",
+        modelName: "Address",
+        calledMethod: "getWarehouses",
         methodProperties: {
-          FindByString: "",
+          CityName: cityName,
+          Page: "1",
+          Limit: "50",
+          Language: "UA",
         },
       }),
     });
@@ -34,11 +35,9 @@ export async function fetchCities(findByString: string): Promise<City[]> {
     }
 
     const data = await response.json();
+
     if (data.success) {
-      const filteredCities = data.data.filter(
-        (city: City) => city.AreaDescription === findByString
-      );
-      return filteredCities;
+      return data.data;
     } else {
       console.error("API response was not successful:", data);
       console.error("Errors:", data.errors);

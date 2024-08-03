@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Area, fetchAreas } from "@/api/fetchAreas";
 import { City, fetchCities } from "@/api/fetchCities";
+import { fetchWarehouses, Warehouse } from "@/api/fetchWarehouses";
 
 export interface FormValues {
   userName: string;
@@ -17,6 +18,7 @@ export interface FormValues {
   phoneNumber: string;
   area: string;
   city: string;
+  warehouse: string;
 }
 
 export const validationSchema = Yup.object().shape({
@@ -52,12 +54,19 @@ export const validationSchema = Yup.object().shape({
     .required("Обов'язкове поле!"),
   area: Yup.string().required("Обов'язкове поле!"),
   city: Yup.string().required("Обов'язкове поле!"),
+  warehouse: Yup.string().required("Обов'язкове поле!"),
 });
 
 const FormOrder = () => {
   const [areas, setAreas] = useState<Area[]>([]);
   const [cities, setCities] = useState<City[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+
+  const [filteredCities, setFilteredCities] = useState<City[]>([]);
+
   const [selectedArea, setSelectedArea] = useState<string>("");
+
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     const loadAreas = async () => {
@@ -72,19 +81,32 @@ const FormOrder = () => {
   }, []);
 
   useEffect(() => {
-    const loadCities = async () => {
-      if (selectedArea) {
+    if (selectedArea) {
+      const loadCities = async () => {
         const fetchedCities = await fetchCities(selectedArea);
-        console.log("Fetched Cities:", fetchedCities);
-        if (fetchedCities) {
-          setCities(fetchedCities);
-        }
-      } else {
-        setCities([]);
-      }
-    };
-    loadCities();
+        setCities(fetchedCities || []);
+      };
+      loadCities();
+    }
   }, [selectedArea]);
+
+  useEffect(() => {
+    const filtered = cities.filter((city) =>
+      city.Description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredCities(filtered);
+  }, [searchTerm, cities]);
+
+  useEffect(() => {
+    const loadWarehouses = async () => {
+      const fetchedWarehouses = await fetchWarehouses(searchTerm);
+      setWarehouses(fetchedWarehouses);
+    };
+
+    if (searchTerm) {
+      loadWarehouses();
+    }
+  }, [searchTerm]);
 
   const handleChangeArea = (
     e: React.ChangeEvent<HTMLSelectElement>,
@@ -93,10 +115,17 @@ const FormOrder = () => {
     const areaValue = e.target.value;
     setSelectedArea(areaValue);
     setFieldValue("area", areaValue);
-    setCities([]); // Очищення списку міст при зміні області
-    setFieldValue("city", ""); // Очищення вибраного міста
+    setSearchTerm("");
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+  const handleSelectCity = (cityName: string, setFieldValue: any) => {
+    setFieldValue("city", cityName);
+    setSearchTerm(cityName);
+    setFilteredCities([]);
+  };
   const handleSubmit = async (
     values: FormValues,
     { resetForm }: { resetForm: () => void }
@@ -114,6 +143,7 @@ const FormOrder = () => {
         phoneNumber: "",
         area: "",
         city: "",
+        warehouse: "",
       }}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}
@@ -195,25 +225,16 @@ const FormOrder = () => {
             </svg>
           </div>
 
-          {/* <div className={s.form__box}>
-            <Field as="select" name="area" className={s.input}>
-              <option value="" label="Область" />
-              {areas.map(({ Description }, index) => (
-                <option key={index} value={Description} label={Description} />
-              ))}
-            </Field>
-            <ErrorFeedback name="area" />
-          </div> */}
           <div className={s.form__box}>
             <Field
               as="select"
               name="area"
-              className={s.input}
+              className={`${s.input} ${s.select}`}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 handleChangeArea(e, setFieldValue)
               }
             >
-              <option value="" label="Область" />
+              <option value="" label="Область" className={s.option} />
               {areas.map(({ Description }, index) => (
                 <option key={index} value={Description} label={Description} />
               ))}
@@ -223,17 +244,50 @@ const FormOrder = () => {
 
           <div className={s.form__box}>
             <Field
-              as="select"
+              className={`${s.input} ${!selectedArea ? s.disabled : ""}`}
+              type="text"
               name="city"
-              className={s.input}
+              placeholder="Місто"
+              value={searchTerm}
+              onChange={handleSearch}
               disabled={!selectedArea}
+              autoComplete="off"
+            />
+            <ErrorFeedback name="city" />
+            {filteredCities.length > 0 && (
+              <ul className={s.city__list}>
+                {filteredCities.map((city, index) => (
+                  <li
+                    key={index}
+                    className={s.city__item}
+                    onClick={() =>
+                      handleSelectCity(city.Description, setFieldValue)
+                    }
+                  >
+                    {city.Description}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className={s.form__box}>
+            <Field
+              as="select"
+              name="warehouse"
+              className={`${s.input} ${s.select} ${
+                !selectedArea || !searchTerm ? s.disabled : ""
+              }`}
+              disabled={!selectedArea || !searchTerm}
             >
-              <option value="" label="Місто" />
-              {cities.map(({ Description }, index) => (
-                <option key={index} value={Description} label={Description} />
+              <option value="" label="Виберіть відділення" />
+              {warehouses.map((warehouse, index) => (
+                <option key={index} value={warehouse.Description}>
+                  {warehouse.Description}
+                </option>
               ))}
             </Field>
-            <ErrorFeedback name="city" />
+            <ErrorFeedback name="warehouse" />
           </div>
 
           <div className={s.box__btn}>

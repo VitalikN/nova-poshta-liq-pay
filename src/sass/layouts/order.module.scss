@@ -26,6 +26,7 @@
   position: relative;
 }
 .input {
+  cursor: pointer;
   width: 100%;
   background-color: #eef4f6;
   border-radius: 8px;
@@ -34,8 +35,19 @@
   color: #141517;
   @include font(14px, 2vw, 20px, 300, 32px);
   padding: 12px 14px;
+  &::placeholder {
+    color: #141517;
+  }
+}
+.select {
+  height: 56px;
 }
 
+.disabled {
+  cursor: help;
+  background-color: #a8afb8;
+  color: #141517;
+}
 .error {
   position: absolute;
   bottom: -15px;
@@ -48,6 +60,19 @@
   margin: 0 auto;
   padding: 12px 0;
 }
+
+.city__list {
+  padding: 5px;
+  color: #141517;
+  background-color: #eef4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-radius: 8px;
+  overflow: scroll;
+  height: 100px;
+}
+
 .box__btn {
   display: flex;
   flex-direction: column;

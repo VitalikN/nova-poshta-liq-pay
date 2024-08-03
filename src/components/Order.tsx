@@ -11,11 +11,11 @@ const Order = () => {
           <FormOrder />
         </div>
 
-        <div>
+        {/* <div>
           <ul>
             <li>Печиво шоколадне</li>
           </ul>
-        </div>
+        </div> */}
       </div>
     </section>
   );
