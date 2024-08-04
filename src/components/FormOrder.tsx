@@ -2,7 +2,6 @@
 
 import { Field, Form, Formik } from "formik";
 import ErrorFeedback from "./ErrorFeedback";
-import * as Yup from "yup";
 
 import s from "@/sass/layouts/order.module.scss";
 import Link from "next/link";
@@ -10,63 +9,25 @@ import { useEffect, useMemo, useState } from "react";
 import { Area, fetchAreas } from "@/api/fetchAreas";
 import { City, fetchCities } from "@/api/fetchCities";
 import { fetchWarehouses, Warehouse } from "@/api/fetchWarehouses";
+import { validationSchema } from "@/utils/validationSchema";
+import { FormValues } from "@/utils/FormValues";
+import { initialValues } from "@/utils/initialValues";
 
-export interface FormValues {
-  userName: string;
-  email: string;
-  lastName: string;
-  phoneNumber: string;
-  area: string;
-  city: string;
-  warehouse: string;
+interface FormOrderProps {
+  onPaymentMethodChange: (method: string) => void;
 }
 
-export const validationSchema = Yup.object().shape({
-  userName: Yup.string()
-    .min(3, "ім'я може містити від 3 до 50 символів")
-    .max(50, "ім'я може містити від 3 до 50 символів")
-    .matches(
-      /^[a-zA-Zа-яА-ЯёЁЇїІіЄєҐґ' -]+$/,
-      "Ім’я може містити тільки букви, пробіли, апострофи і дефіси"
-    )
-    .required("Обов'язкове поле!"),
-
-  lastName: Yup.string()
-    .min(3, "Прізвище може містити від 3 до 50 символів")
-    .max(50, "Прізвище може містити від 3 до 50 символів")
-    .matches(
-      /^[a-zA-Zа-яА-ЯёЁЇїІіЄєҐґ' -]+$/,
-      "Прізвище може містити тільки букви, пробіли, апострофи і дефіси"
-    )
-    .required("Обов'язкове поле!"),
-
-  email: Yup.string()
-    .email("Некоректний формат електронної пошти")
-    .required("Обов'язкове поле!")
-    .matches(
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      "Введіть дійсну електронну адресу у форматі username@example.com"
-    ),
-  phoneNumber: Yup.string()
-    .matches(/^\d+$/, "Номер телефону може містити тільки цифри")
-    .min(10, "Номер телефону має містити не менше 10 цифр")
-    .max(15, "Номер телефону має містити не більше 15 цифр")
-    .required("Обов'язкове поле!"),
-  area: Yup.string().required("Обов'язкове поле!"),
-  city: Yup.string().required("Обов'язкове поле!"),
-  warehouse: Yup.string().required("Обов'язкове поле!"),
-});
-
-const FormOrder = () => {
+const FormOrder: React.FC<FormOrderProps> = ({ onPaymentMethodChange }) => {
   const [areas, setAreas] = useState<Area[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
-
   const [selectedArea, setSelectedArea] = useState<string>("");
-
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<string>("");
 
   useEffect(() => {
     const loadAreas = async () => {
@@ -116,6 +77,9 @@ const FormOrder = () => {
     setSelectedArea(areaValue);
     setFieldValue("area", areaValue);
     setSearchTerm("");
+    setCities([]);
+    setFilteredCities([]);
+    setFieldValue("city", "");
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,6 +90,10 @@ const FormOrder = () => {
     setSearchTerm(cityName);
     setFilteredCities([]);
   };
+  const handlePaymentMethodChange = (method: string) => {
+    onPaymentMethodChange(method);
+    setSelectedPaymentMethod(method);
+  };
   const handleSubmit = async (
     values: FormValues,
     { resetForm }: { resetForm: () => void }
@@ -134,31 +102,30 @@ const FormOrder = () => {
     // resetForm();
   };
 
+  const handleFormSubmit = (values: FormValues, formikHelpers: any) => {
+    if (selectedPaymentMethod === "Оплата онлайн картою") {
+      const confirmed = window.confirm(
+        "Ви впевнені, що хочете оплатити онлайн картою?"
+      );
+      if (confirmed) {
+        handleSubmit(values, formikHelpers);
+      }
+    } else {
+      handleSubmit(values, formikHelpers);
+    }
+  };
+
   return (
     <Formik
-      initialValues={{
-        userName: "",
-        lastName: "",
-        email: "",
-        phoneNumber: "",
-        area: "",
-        city: "",
-        warehouse: "",
-      }}
-      onSubmit={handleSubmit}
+      initialValues={initialValues}
+      onSubmit={handleFormSubmit}
       validationSchema={validationSchema}
     >
       {({ errors, touched, setFieldValue }) => (
         <Form className={s.form}>
           <div className={s.form__box}>
             <Field
-              className={`${s.input} ${
-                touched.userName && errors.userName
-                  ? s.invalid
-                  : touched.userName && !errors.userName
-                  ? s.valid
-                  : ""
-              }`}
+              className={s.input}
               type="text"
               name="userName"
               placeholder="Ім’я"
@@ -169,13 +136,8 @@ const FormOrder = () => {
 
           <div className={s.form__box}>
             <Field
-              className={`${s.input} ${
-                touched.lastName && errors.lastName
-                  ? s.invalid
-                  : touched.lastName && !errors.lastName
-                  ? s.valid
-                  : ""
-              }`}
+              className={`${s.input} 
+              `}
               type="text"
               name="lastName"
               placeholder="Прізвище"
@@ -186,13 +148,8 @@ const FormOrder = () => {
 
           <div className={s.form__box}>
             <Field
-              className={`${s.input} ${
-                touched.email && errors.email
-                  ? s.invalid
-                  : touched.email && !errors.email
-                  ? s.valid
-                  : ""
-              }`}
+              className={`${s.input} 
+              `}
               type="email"
               name="email"
               placeholder="Email"
@@ -203,13 +160,7 @@ const FormOrder = () => {
           </div>
           <div className={s.form__box}>
             <Field
-              className={`${s.input} ${
-                touched.phoneNumber && errors.phoneNumber
-                  ? s.invalid
-                  : touched.phoneNumber && !errors.phoneNumber
-                  ? s.valid
-                  : ""
-              }`}
+              className={`${s.input} `}
               type="tel"
               name="phoneNumber"
               placeholder="Номер телефону"
@@ -280,7 +231,7 @@ const FormOrder = () => {
               }`}
               disabled={!selectedArea || !searchTerm}
             >
-              <option value="" label="Виберіть відділення" />
+              <option value="" label="Відділення" />
               {warehouses.map((warehouse, index) => (
                 <option key={index} value={warehouse.Description}>
                   {warehouse.Description}
@@ -290,6 +241,36 @@ const FormOrder = () => {
             <ErrorFeedback name="warehouse" />
           </div>
 
+          <div className={`${s.form__box} ${s.form__box__radio}`}>
+            <label className={` ${s.form__label}`}>
+              <Field
+                className={` ${s.form__radio}`}
+                type="radio"
+                name="paymentMethod"
+                value="Оплата при отриманні"
+                onClick={() =>
+                  handlePaymentMethodChange("Оплата при отриманні")
+                }
+              />
+              <span className={s.radio__custom}></span>
+              Оплата при отриманні
+            </label>
+            <label className={` ${s.form__label}`}>
+              <Field
+                className={` ${s.form__radio}`}
+                type="radio"
+                name="paymentMethod"
+                value="Оплата онлайн картою"
+                onClick={() =>
+                  handlePaymentMethodChange("Оплата онлайн картою")
+                }
+              />
+              <span className={s.radio__custom}></span>
+              Оплата онлайн картою
+            </label>
+            <ErrorFeedback name="paymentMethod" />
+          </div>
+          {/*  */}
           <div className={s.box__btn}>
             <Link
               href="/"
